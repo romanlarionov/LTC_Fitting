@@ -1,7 +1,7 @@
 #ifndef _BRDF_
 #define _BRDF_
 
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 using namespace glm;
 
 class Brdf

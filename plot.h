@@ -1,7 +1,7 @@
 #ifndef _PLOT_
 #define _PLOT_
 
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 using namespace glm;
 
 #include "Cimg.h"
@@ -99,13 +99,14 @@ void spherical_plot(const BrdfOrLTC& brdforltc, const char* filename)
 	const int image_size = 256;
 	CImg<float> image(image_size, image_size, 1, 3);
 
-	// camera 
+	// camera (??)
 	vec3 Z = normalize(vec3(-1,1,1));
 	vec3 X = normalize(vec3(1,1,0));
 	X = normalize(X - Z*dot(X,Z));
 	vec3 Y = -cross(X,Z);
 		
 	// maximum value of the function (color map scaling)
+	// todo: what does the brdf/ltc sampling process return? radiance? irradiance?
 	float max_value = brdforltc.computeMaxValue();
 
 	// loop over pixels
@@ -115,18 +116,20 @@ void spherical_plot(const BrdfOrLTC& brdforltc, const char* filename)
 		// intersection point on the sphere
 		const float x = -1.1f + 2.2f * (i+0.5f)/image_size;
 		const float y = -1.1f + 2.2f * (j+0.5f)/image_size;
-		if(x*x + y*y > 1.0f)
+		if(x*x + y*y > 1.0f) // if outside the bounds of the projected sphere
 		{
 			image(i, j, 0, 0) = 255.0f;
 			image(i, j, 0, 1) = 255.0f;
 			image(i, j, 0, 2) = 255.0f;
 			continue;
-		}		
+		}
+		
+		// r^2 = x^2 + y^2 + z^2. r = 1
 		const float z = sqrtf(1.0f - x*x - y*y);
 		vec3 L = x*X + y*Y + z*Z;
 
 		// evaluate function
-		float value = brdforltc.eval(L) / max_value;
+		float value = brdforltc.eval(L) / max_value; // this is a ratio
 
 		// color map
 		image(i, j, 0, 0) = colorMap.linear_atX(value*(float(colorMap.width())-1.0f), 0, 0, 0);
@@ -166,7 +169,7 @@ void make_spherical_plots(const Brdf& brdf, const mat3 * tab, const int N)
 		LTC_matrices(i,j,0,8) = tab[i+j*N][2][2];
 	}
 
-	// render spherical plots
+	// render spherical plots (they dont render every single (alpha,theta) tuple plot)
 	float alpha_tab[] = {0.05f, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 1.0f};
 	float theta_tab[] = {0.0f, 15.0f, 30.0f, 45.0f, 60.0f, 75.0f, 89.0f};
 	for(int a = 0 ; a<7 ; ++a)
@@ -175,7 +178,7 @@ void make_spherical_plots(const Brdf& brdf, const mat3 * tab, const int N)
 		// configuration
 		const float alpha = alpha_tab[a];
 		const float theta = theta_tab[t] * 3.14159f / 180.0f;
-		const vec3 V(sinf(theta), 0.0f, cosf(theta));
+		const vec3 V(sinf(theta), 0.0f, cosf(theta)); // ??
 		
 		// fetch texture with parameterization = [(sqrtf(alpha), theta]
 		float x = sqrtf(alpha)*((float)(LTC_matrices.width())-1.0f);
