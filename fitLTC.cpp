@@ -1,6 +1,6 @@
 // fitLTC.cpp : Defines the entry point for the console application.
 //
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 using namespace glm;
 
 #include <algorithm>
@@ -12,6 +12,7 @@ using namespace glm;
 #include "brdf_ggx.h"
 #include "brdf_beckmann.h"
 #include "Brdf_disneyDiffuse.h"
+#include "Brdf_merl.h"
 
 #include "nelder_mead.h"
 
@@ -24,7 +25,6 @@ const int N = 64;
 const int Nsample = 50;
 // minimal roughness (avoid singularities)
 const float MIN_ALPHA = 0.0001f;
-
 
 // compute the norm (albedo) of the BRDF
 float computeNorm(const Brdf& brdf, const vec3& V, const float alpha)
@@ -156,6 +156,7 @@ struct FitLTC
 		ltc.update();
 	}
 
+	// dont think this function nor 'computeError' are used anywhere. 
 	float operator()(const float * params)
 	{
 		update(params);
@@ -195,6 +196,7 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 	for(int a = N-1 ; a >= 0   ; --a)
 	for(int t =   0 ; t <= N-1 ; ++t)
 	{
+		// steps theta from 0 to some N. becomes the ratio of t/N-1 * pi/2
 		float theta = std::min<float>(1.57f, t / float(N-1) * 1.57079f);
 		const vec3 V = vec3(sinf(theta),0,cosf(theta));
 
@@ -206,7 +208,7 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 		cout << "alpha = " << alpha << "\t theta = " << theta << endl;
 		cout << endl;
 
-		ltc.amplitude = computeNorm(brdf, V, alpha); 
+		ltc.amplitude = computeNorm(brdf, V, alpha); // todo: figure out what this does
 		const vec3 averageDir = computeAverageDir(brdf, V, alpha);		
 		bool isotropic;
 
@@ -234,7 +236,7 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 			ltc.m23 = 0;
 			ltc.update();
 
-			isotropic = true;
+			isotropic = true; // starts off as symmetric lobe around [0,0,1]
 		}
 		// otherwise use previous configuration as first guess
 		else
@@ -278,24 +280,27 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 int main(int argc, char* argv[])
 {
 	// BRDF to fit
-	BrdfGGX brdf;
+	//BrdfGGX brdf;
 	//BrdfBeckmann brdf;
 	//BrdfDisneyDiffuse brdf;
+	BrdfMERL brdf;
+	brdf.load("merl_data/brass.binary");
 	
 	// allocate data
 	mat3 * tab = new mat3[N*N];
 	vec2 * tabAmplitude = new vec2[N*N];
 	
 	// fit
-	fitTab(tab, tabAmplitude, N, brdf);
+	//fitTab(tab, tabAmplitude, N, brdf);
 
 	// export in C, matlab and DDS
-	writeTabMatlab(tab, tabAmplitude, N);
-	writeTabC(tab, tabAmplitude, N);
-	writeDDS(tab, tabAmplitude, N);
+	//writeTabMatlab(tab, tabAmplitude, N);
+	//writeTabC(tab, tabAmplitude, N);
+	//writeDDS(tab, tabAmplitude, N);
+	//writeTabJSON(tab, tabAmplitude, N);
 
 	// spherical plots
-	make_spherical_plots(brdf, tab, N);
+	//make_spherical_plots(brdf, tab, N);
 
 	// delete data
 	delete [] tab;
