@@ -98,6 +98,53 @@ void writeTabMatlab(mat3 * tab, vec2 * tabAmplitude, int N)
 	file.close();
 }
 
+#include <iostream>
+
+// export data in JSON
+// only prints out M^-1 and mag
+void writeTabJSON(mat3 * tab, vec2 * tabAmplitude, int N)
+{
+	cout << endl << endl;
+
+	ofstream file("results/ltc.js");
+
+	file << std::fixed;
+	file << std::setprecision(6);
+	file << "var g_ltc_Minv = [" << endl;
+	for(int t = 0 ; t < N ; ++t)
+	for(int a = 0 ; a < N ; ++a)
+	{
+		float a0 = tab[a + t*N][0][0];
+		float b0 = tab[a + t*N][0][2];
+		float c0 = tab[a + t*N][1][1];
+		float d0 = tab[a + t*N][2][0];
+
+		float a1 = a0;
+		float b1 = -b0;
+		float c1 = (a0 - b0*d0) / c0;
+		float d1 = -d0;
+
+		cout << "a: " << a0 << " b: " << b0 << " c: " << c0 << " d: " << d0 << endl << endl;
+
+		file << a1 << ", " << b1 << ", " << c1 << ", " << d1;
+		if(a != N-1 || t != N-1)
+			file << ", ";
+	}
+	file << "];" << endl;
+
+	file << "var g_ltc_Mag = [" << endl;
+	for(int t = 0 ; t < N ; ++t)
+	for(int a = 0 ; a < N ; ++a)
+	{
+		file << tabAmplitude[a + t*N][0];
+		if(a != N-1 || t != N-1)
+			file << ", ";
+	}
+	file << "];" << endl;
+
+	file.close();
+}
+
 // export data in dds
 #include "dds.h"
 
@@ -131,6 +178,46 @@ void writeDDS(mat3 * tab, vec2 * tabAmplitude, int N)
 	SaveDDS("results/ltc_amp.dds", DDS_FORMAT_R32G32_FLOAT,       sizeof(float)*2, N, N, tabAmplitude);
 
 	delete [] data;
+}
+
+#include "Cimg.h"
+using namespace cimg_library;
+
+void writePNG(mat3 * tab, vec2 * tabAmplitude, int N)
+{
+	CImg<float> image_M(N, N, 1, 4);
+	CImg<float> image_Minv(N, N, 1, 4);
+	CImg<float> image_Amp(N, N, 1, 1);
+
+	for (int i = 0; i < N; ++i)
+	for (int j = 0; j < N; ++j)
+	{
+		const mat3& m = tab[j + i*N];
+		
+		float a = m[0][0];
+		float b = m[0][2];
+		float c = m[1][1];
+		float d = m[2][0];
+
+		image_M(i, j, 0, 0) = a;
+		image_M(i, j, 0, 1) = b;
+		image_M(i, j, 0, 2) = c;
+		image_M(i, j, 0, 3) = d;
+	
+		image_Minv(i, j, 0, 0) = a;
+		image_Minv(i, j, 0, 1) = -b;
+		image_Minv(i, j, 0, 2) = (a - b*d) / c;
+		image_Minv(i, j, 0, 3) = -d;
+
+		image_Amp(i, j, 0, 0) = tabAmplitude[j + i*N][1];
+		
+		std::cout << "num: " << j + i*N << "\n";
+		std::cout << a << " " << b << " " << c << " " << d << "\n\n";
+	}
+
+	image_M.save("ltc_M.png");	
+	image_Minv.save("ltc_Minv.png");	
+	image_Amp.save("ltc_Amp.png");	
 }
 
 #endif
