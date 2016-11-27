@@ -32,7 +32,7 @@ float computeNorm(const Brdf& brdf, const vec3& V, const float alpha)
 	float norm = 0.0;
 
 	for(int j = 0 ; j < Nsample ; ++j)
-	for(int i = 0 ; i < Nsample ; ++i)
+	for(int i = 0 ; i < Nsample ; ++i) 
 	{
 		const float U1 = (i+0.5f)/(float)Nsample;
 		const float U2 = (j+0.5f)/(float)Nsample;
