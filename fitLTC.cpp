@@ -31,8 +31,8 @@ float computeNorm(const Brdf& brdf, const vec3& V, const float alpha)
 {
 	float norm = 0.0;
 
-	for(int j = 0 ; j < Nsample ; ++j)
-	for(int i = 0 ; i < Nsample ; ++i) 
+	for(int j = 0 ; j < Nsample; ++j)
+	for(int i = 0 ; i < Nsample; ++i) 
 	{
 		const float U1 = (i+0.5f)/(float)Nsample;
 		const float U2 = (j+0.5f)/(float)Nsample;
@@ -56,8 +56,8 @@ vec3 computeAverageDir(const Brdf& brdf, const vec3& V, const float alpha)
 {
 	vec3 averageDir = vec3(0,0,0);
 
-	for(int j = 0 ; j < Nsample ; ++j)
-	for(int i = 0 ; i < Nsample ; ++i)
+	for(int j = 0 ; j < Nsample; ++j)
+	for(int i = 0 ; i < Nsample; ++i)
 	{
 		const float U1 = (i+0.5f)/(float)Nsample;
 		const float U2 = (j+0.5f)/(float)Nsample;
@@ -95,7 +95,7 @@ float computeError(const LTC& ltc, const Brdf& brdf, const vec3& V, const float 
 		{
 			// sample
 			const vec3 L = ltc.sample(U1, U2);
-				
+				 
 			// error with MIS weight
 			float pdf_brdf;
 			float eval_brdf = brdf.eval(V, L, alpha, pdf_brdf);
@@ -193,22 +193,22 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 	LTC ltc;
 
 	// loop over theta and alpha
-	for(int a = N-1 ; a >= 0   ; --a)
-	for(int t =   0 ; t <= N-1 ; ++t)
+	for(int a = 2; a >= 0; --a)
+	for(int t = 0; t <= N - 1; ++t)
 	{
 		// steps theta from 0 to some N. becomes the ratio of t/N-1 * pi/2
 		float theta = std::min<float>(1.57f, t / float(N-1) * 1.57079f);
 		const vec3 V = vec3(sinf(theta),0,cosf(theta));
 
-		// alpha = roughness^2
-		float roughness = a / float(N-1);
-		float alpha = std::max<float>(roughness*roughness, MIN_ALPHA);
+		//float roughness = a / float(N-1);
+		//float alpha = std::max<float>(roughness*roughness, MIN_ALPHA);
+		float alpha = a;
 
 		cout << "a = " << a << "\t t = " << t  << endl;
 		cout << "alpha = " << alpha << "\t theta = " << theta << endl;
 		cout << endl;
 
-		ltc.amplitude = computeNorm(brdf, V, alpha); // todo: figure out what this does
+		ltc.amplitude = computeNorm(brdf, V, alpha);
 		const vec3 averageDir = computeAverageDir(brdf, V, alpha);		
 		bool isotropic;
 
@@ -221,7 +221,7 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 			ltc.Y = vec3(0,1,0);
 			ltc.Z = vec3(0,0,1);
 
-			if(a == N-1) // roughness = 1
+			if(a == 3 - 1) // roughness = 1
 			{
 				ltc.m11 = 1.0f;
 				ltc.m22 = 1.0f;
@@ -284,7 +284,7 @@ int main(int argc, char* argv[])
 	//BrdfBeckmann brdf;
 	//BrdfDisneyDiffuse brdf;
 	BrdfMERL brdf;
-	brdf.load("merl_data/brass.binary");
+	brdf.load("merl_data/brass.binary", Nsample, N);
 	
 	// allocate data
 	mat3 * tab = new mat3[N*N];

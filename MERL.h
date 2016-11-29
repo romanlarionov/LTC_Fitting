@@ -31,7 +31,7 @@
 #define RED_SCALE (1.0/1500.0)
 #define GREEN_SCALE (1.15/1500.0)
 #define BLUE_SCALE (1.66/1500.0)
-#define M_PI	3.1415926535897932384626433832795
+//#define M_PI	3.1415926535897932384626433832795
 
 // cross product of two vectors
 static void cross_product (double* v1, double* v2, double* out)
