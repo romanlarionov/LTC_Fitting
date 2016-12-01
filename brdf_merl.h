@@ -36,7 +36,7 @@ public:
 	/* DONT USE */
 	vec3 sample(const vec3& V, const float alpha, const float U1, const float U2) const
 	{
-		unsigned int v_theta_index = static_cast<unsigned int>(round((acosf(V.z) * float(_N - 1)) / (0.5 * M_PI)));
+		/*unsigned int v_theta_index = static_cast<unsigned int>(round((acosf(V.z) * float(_N - 1)) / (0.5 * M_PI)));
 		unsigned int l_phi_index = static_cast<unsigned int>(round(float(_NumSamples - 1) * U1)); // assume phi_light is uniformly distributed
 		unsigned int l_theta_index = 0;
 
@@ -52,7 +52,10 @@ public:
 		float o_theta = l_theta_index * 0.5 * M_PI / static_cast<float>(_NumSamples - 1);
 		float o_phi = l_phi_index * 2.0 * M_PI / static_cast<float>(_NumSamples - 1);
 		vec3 L = vec3(cosf(o_theta) * sinf(o_phi), sinf(o_theta) * sinf(o_phi), cosf(o_phi));
-		return L;
+		return L;*/
+
+		vec3 temp = vec3(0, 0, 0);
+		return temp;
 	}
 
 	void load(const char* filename, const int NumSamples, const int N)
@@ -67,8 +70,8 @@ public:
 		_NumSamples = NumSamples; _N = N;
 
 		_brdf.resize(3, vector<vector<vector<double> > >(N, vector<vector<double> >(NumSamples, vector<double>(NumSamples, 0))));
-		_pdf.resize(3, vector<vector<vector<double> > >(N, vector<vector<double> >(NumSamples, vector<double>(NumSamples, 0))));
-		_cdf.resize(3, vector<vector<vector<double> > >(N, vector<vector<double> >(NumSamples, vector<double>(NumSamples, 0))));
+		//_pdf.resize(3, vector<vector<vector<double> > >(N, vector<vector<double> >(NumSamples, vector<double>(NumSamples, 0))));
+		//_cdf.resize(3, vector<vector<vector<double> > >(N, vector<vector<double> >(NumSamples, vector<double>(NumSamples, 0))));
 
 		// Load BRDF data per channel.
 		for (int i = 0; i < N; ++i)
@@ -86,12 +89,10 @@ public:
 
 						double red, green, blue;
 						lookup_brdf_val(_raw_brdf_data, theta_in, 0.0, theta_out, phi_out, red, green, blue);
-						_brdf[0][i][k][l] += blue;
+						_brdf[0][i][k][l] += red;
 						_brdf[1][i][k][l] += green;
-						_brdf[2][i][k][l] += red;
-						//cout << "brdf: " << _brdf[0][i][k][l] << endl;
+						_brdf[2][i][k][l] += blue;
 					}
-					//assert(false);
 				}
 			}
 
@@ -105,8 +106,9 @@ public:
 				}
 		}
 
+		/* DO NOT USE CURRENTLY */
 		// Construct PDFs per channel.
-		for (int c = 0; c < 3; ++c) // channel
+		/*for (int c = 0; c < 3; ++c) // channel
 		for (int i = 0; i < N; ++i)
 		{
 			// Copy brdf table to pdf table for normalization.
@@ -149,6 +151,7 @@ public:
 					double test = _cdf[c][i][j][NumSamples - 1];
 					//assert(abs(1.0 - test) < 0.00001); // should span from 0 to 1
 				}
+		*/
 
 		free(_raw_brdf_data);
 	}
@@ -156,8 +159,8 @@ public:
 private:
 	double *_raw_brdf_data;
 	vector<vector<vector<vector<double> > > > _brdf; // channel x view_theta x light_phi x light_theta
-	vector<vector<vector<vector<double> > > > _pdf;
-	vector<vector<vector<vector<double> > > > _cdf;
+	//vector<vector<vector<vector<double> > > > _pdf;
+	//vector<vector<vector<vector<double> > > > _cdf;
 
 	int _NumSamples;
 	int _N;
