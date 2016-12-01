@@ -18,11 +18,7 @@ class BrdfMERL : public Brdf
 public:
 	float eval(const vec3& V, const vec3& L, const float alpha, float& pdf) const
 	{
-		if(V.z <= 0)
-		{
-			pdf = 0;
-			return 0;
-		}
+		if (V.z <= 0) return 0;
 
 		// Undo formatting performed in `sample` function.
 		float l_theta = atanf(L.y / L.x);
@@ -32,10 +28,12 @@ public:
 		unsigned int l_theta_index = static_cast<unsigned int>(round(l_theta * float(_NumSamples - 1) / (0.5 * M_PI)));
 		unsigned int l_phi_index = static_cast<unsigned int>(round(l_phi * float(_NumSamples - 1) / (2.0 * M_PI)));
 
-		pdf = _pdf[channel][v_theta_index][l_phi_index][l_theta_index];
+		// pdf does nothing for uniform sampling. will be constant of integration.
+		//pdf = _pdf[channel][v_theta_index][l_phi_index][l_theta_index];
 		return _brdf[channel][v_theta_index][l_phi_index][l_theta_index];
 	}
 
+	/* DONT USE */
 	vec3 sample(const vec3& V, const float alpha, const float U1, const float U2) const
 	{
 		unsigned int v_theta_index = static_cast<unsigned int>(round((acosf(V.z) * float(_N - 1)) / (0.5 * M_PI)));
@@ -122,18 +120,18 @@ public:
 				for (int l = 0; l < NumSamples; ++l) // theta
 					mag += _pdf[c][i][k][l] * _pdf[c][i][k][l];
 
-				cout << "mag: " << mag << endl;
+				//cout << "mag: " << mag << endl;
 				for (int l = 0; l < NumSamples; ++l) // theta
 				{
-					cout << "l: " << l << " pdf: " << _pdf[c][i][k][l] << " | ";
+					//cout << "l: " << l << " pdf: " << _pdf[c][i][k][l] << " | ";
 					_pdf[c][i][k][l] /= sqrt(mag);
 					test += _pdf[c][i][k][l];
-					cout << "l: " << l << " pdf: " << _pdf[c][i][k][l] << endl;
+					//cout << "l: " << l << " pdf: " << _pdf[c][i][k][l] << endl;
 				}
 
-				cout << "mag: " << sqrt(mag) << endl;
+				//cout << "mag: " << sqrt(mag) << endl;
 				//cout << "test: " << test << " k: " << k << " | ";
-				assert(abs(1.0 - test) < 0.1);
+				//assert(abs(1.0 - test) < 0.1);
 				//assert(false);
 			}
 		}
@@ -149,7 +147,7 @@ public:
 						_cdf[c][i][j][k] = _cdf[c][i][j][k - 1] + _pdf[c][i][j][k];
 
 					double test = _cdf[c][i][j][NumSamples - 1];
-					assert(abs(1.0 - test) < 0.00001); // should span from 0 to 1
+					//assert(abs(1.0 - test) < 0.00001); // should span from 0 to 1
 				}
 
 		free(_raw_brdf_data);

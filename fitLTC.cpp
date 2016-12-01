@@ -6,6 +6,7 @@ using namespace glm;
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <math.h>
 
 #include "LTC.h"
 #include "brdf.h"
@@ -22,7 +23,8 @@ using namespace glm;
 // size of precomputed table (theta, alpha)
 const int N = 64;
 // number of samples used to compute the error during fitting
-const int Nsample = 50;
+//const int Nsample = 50;
+const int Nsample = 100;
 // minimal roughness (avoid singularities)
 const float MIN_ALPHA = 0.0001f;
 
@@ -38,14 +40,20 @@ float computeNorm(const Brdf& brdf, const vec3& V, const float alpha)
 		const float U2 = (j+0.5f)/(float)Nsample;
 
 		// sample
-		const vec3 L = brdf.sample(V, alpha, U1, U2);
+		//const vec3 L = brdf.sample(V, alpha, U1, U2);
+		float theta = 0.5 * M_PI * U1;
+		float phi = 2.0 * M_PI * U2;
+		const vec3 L = vec3(cosf(theta) * sinf(phi), sinf(phi) * sinf(theta), cosf(phi));
 
 		// eval
+		//float pdf;
 		float pdf;
 		float eval = brdf.eval(V, L, alpha, pdf);
+		pdf = 1.0 / (M_PI * M_PI);
 
 		// accumulate
-		norm += (pdf > 0) ? eval / pdf : 0.0f;
+		//norm += (pdf > 0) ? eval / pdf : 0.0f;
+		norm += eval * sinf(theta) / pdf;
 	}
 
 	return norm / (float)(Nsample*Nsample);
@@ -54,6 +62,7 @@ float computeNorm(const Brdf& brdf, const vec3& V, const float alpha)
 // compute the average direction of the BRDF
 vec3 computeAverageDir(const Brdf& brdf, const vec3& V, const float alpha)
 {
+	// sample uniformly by removing sample directions they provide. Then divide by new pdf which is 1/PI^2
 	vec3 averageDir = vec3(0,0,0);
 
 	for(int j = 0 ; j < Nsample; ++j)
@@ -63,14 +72,19 @@ vec3 computeAverageDir(const Brdf& brdf, const vec3& V, const float alpha)
 		const float U2 = (j+0.5f)/(float)Nsample;
 
 		// sample
-		const vec3 L = brdf.sample(V, alpha, U1, U2);
+		//const vec3 L = brdf.sample(V, alpha, U1, U2);
+		float theta = 0.5 * M_PI * U1;
+		float phi = 2.0 * M_PI * U2;
+		const vec3 L = vec3(cosf(theta) * sinf(phi), sinf(phi) * sinf(theta), cosf(phi));
 
 		// eval
 		float pdf;
 		float eval = brdf.eval(V, L, alpha, pdf);
+		pdf = 1.0 / (M_PI * M_PI);
 
 		// accumulate
-		averageDir += (pdf > 0) ? eval / pdf * L : vec3(0,0,0);
+		//averageDir += (pdf > 0) ? eval / pdf * L : vec3(0,0,0);
+		averageDir += eval * sinf(theta) / pdf * L;
 	}
 
 	// clear y component, which should be zero with isotropic BRDFs
@@ -85,8 +99,8 @@ float computeError(const LTC& ltc, const Brdf& brdf, const vec3& V, const float 
 {
 	double error = 0.0;
 
-	for(int j = 0 ; j < Nsample ; ++j)
-	for(int i = 0 ; i < Nsample ; ++i)
+	for(int j = 0; j < Nsample; ++j)
+	for(int i = 0; i < Nsample; ++i)
 	{
 		const float U1 = (i+0.5f)/(float)Nsample;
 		const float U2 = (j+0.5f)/(float)Nsample;
@@ -94,8 +108,11 @@ float computeError(const LTC& ltc, const Brdf& brdf, const vec3& V, const float 
 		// importance sample LTC
 		{
 			// sample
-			const vec3 L = ltc.sample(U1, U2);
-				 
+			//const vec3 L = ltc.sample(U1, U2);
+			float theta = 0.5 * M_PI * U1;
+			float phi = 2.0 * M_PI * U2;
+			const vec3 L = vec3(cosf(theta) * sinf(phi), sinf(phi) * sinf(theta), cosf(phi));
+
 			// error with MIS weight
 			float pdf_brdf;
 			float eval_brdf = brdf.eval(V, L, alpha, pdf_brdf);
@@ -103,11 +120,13 @@ float computeError(const LTC& ltc, const Brdf& brdf, const vec3& V, const float 
 			float pdf_ltc = eval_ltc / ltc.amplitude;
 			double error_ = fabsf(eval_brdf - eval_ltc);
 			error_ = error_*error_*error_;
-			error += error_ / (pdf_ltc + pdf_brdf);
+
+			float pdf = 1.0 / (M_PI * M_PI);
+			error += error_ * sinf(theta) / pdf; // uniform sampling
 		}
 
 		// importance sample BRDF
-		{
+		/*{
 			// sample
 			const vec3 L = brdf.sample(V, alpha, U1, U2);
 
@@ -119,7 +138,7 @@ float computeError(const LTC& ltc, const Brdf& brdf, const vec3& V, const float 
 			double error_ = fabsf(eval_brdf - eval_ltc);
 			error_ = error_*error_*error_;
 			error += error_ / (pdf_ltc + pdf_brdf);
-		}
+		}*/
 	}
 
 	return (float)error / (float)(Nsample*Nsample);
@@ -291,13 +310,13 @@ int main(int argc, char* argv[])
 	vec2 * tabAmplitude = new vec2[N*N];
 	
 	// fit
-	//fitTab(tab, tabAmplitude, N, brdf);
+	fitTab(tab, tabAmplitude, N, brdf);
 
 	// export in C, matlab and DDS
 	//writeTabMatlab(tab, tabAmplitude, N);
 	//writeTabC(tab, tabAmplitude, N);
 	//writeDDS(tab, tabAmplitude, N);
-	//writeTabJSON(tab, tabAmplitude, N);
+	writeTabJSON(tab, tabAmplitude, N);
 
 	// spherical plots
 	//make_spherical_plots(brdf, tab, N);

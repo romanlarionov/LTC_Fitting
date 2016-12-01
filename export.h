@@ -107,12 +107,13 @@ void writeTabJSON(mat3 * tab, vec2 * tabAmplitude, int N)
 	cout << endl << endl;
 
 	ofstream file("results/ltc.js");
+	ofstream test("results/fit.txt");
 
 	file << std::fixed;
 	file << std::setprecision(6);
 	file << "var g_ltc_Minv = [" << endl;
-	for(int t = 0 ; t < N ; ++t)
-	for(int a = 0 ; a < N ; ++a)
+	for(int a = 0; a < 3; ++a)
+	for(int t = 0; t < N; ++t)
 	{
 		float a0 = tab[a + t*N][0][0];
 		float b0 = tab[a + t*N][0][2];
@@ -124,7 +125,7 @@ void writeTabJSON(mat3 * tab, vec2 * tabAmplitude, int N)
 		float c1 = (a0 - b0*d0) / c0;
 		float d1 = -d0;
 
-		cout << "a: " << a0 << " b: " << b0 << " c: " << c0 << " d: " << d0 << endl << endl;
+		test << "a: " << a0 << " b: " << b0 << " c: " << c0 << " d: " << d0 << endl << endl;
 
 		file << a1 << ", " << b1 << ", " << c1 << ", " << d1;
 		if(a != N-1 || t != N-1)
@@ -143,6 +144,7 @@ void writeTabJSON(mat3 * tab, vec2 * tabAmplitude, int N)
 	file << "];" << endl;
 
 	file.close();
+	test.close();
 }
 
 // export data in dds
