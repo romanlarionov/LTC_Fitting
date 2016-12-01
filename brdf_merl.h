@@ -88,7 +88,7 @@ public:
 						double theta_out = l * 0.5 * M_PI / static_cast<double>(NumSamples - 1);
 
 						double red, green, blue;
-						lookup_brdf_val(_raw_brdf_data, theta_in, 0.0, theta_out, phi_out, red, green, blue);
+						lookup_brdf_val(_raw_brdf_data, theta_in, phi_in, theta_out, phi_out, red, green, blue);
 						_brdf[0][i][k][l] += red;
 						_brdf[1][i][k][l] += green;
 						_brdf[2][i][k][l] += blue;

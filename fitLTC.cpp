@@ -247,8 +247,8 @@ void fitTab(mat3 * tab, vec2 * tabAmplitude, const int N, const Brdf& brdf)
 			}
 			else // init with roughness of previous fit
 			{
-				ltc.m11 = std::max<float>(tab[a+1+t*N][0][0], MIN_ALPHA);
-				ltc.m22 = std::max<float>(tab[a+1+t*N][1][1], MIN_ALPHA);
+				ltc.m11 = std::max<float>(tab[a+1+t*N][0][0], 0);
+				ltc.m22 = std::max<float>(tab[a+1+t*N][1][1], 0);
 			}
 			
 			ltc.m13 = 0;
