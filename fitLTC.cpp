@@ -23,8 +23,7 @@ using namespace glm;
 // size of precomputed table (theta, alpha)
 const int N = 64;
 // number of samples used to compute the error during fitting
-//const int Nsample = 50;
-const int Nsample = 100;
+const int Nsample = 2000;
 // minimal roughness (avoid singularities)
 const float MIN_ALPHA = 0.0001f;
 
@@ -303,7 +302,8 @@ int main(int argc, char* argv[])
 	//BrdfBeckmann brdf;
 	//BrdfDisneyDiffuse brdf;
 	BrdfMERL brdf;
-	brdf.load("merl_data/brass.binary", Nsample, N);
+	//brdf.load("merl_data/brass.binary", Nsample, N);
+	brdf.load("merl_data/aluminum.binary", Nsample, N);
 	
 	// allocate data
 	mat3 * tab = new mat3[N*N];
